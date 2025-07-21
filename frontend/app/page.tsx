@@ -7,9 +7,12 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/")
-      .then((res) => res.json())
-      .then((data) => setStatus(data.message))
+    fetch("/api/health")
+      .then((res) => {
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.json();
+      })
+      .then((data) => setStatus(data.status === "ok" ? "Backend is healthy" : "Backend status: " + data.status))
       .catch((err) => setError("Could not connect to backend."));
   }, []);
 
@@ -20,6 +23,7 @@ export default function Home() {
       <pre style={{ background: "#f4f4f4", padding: 16, borderRadius: 8 }}>
         {error ? error : status}
       </pre>
+      <a href="/DownloadPage" style={{ marginTop: 24, display: "inline-block", fontSize: 18, color: '#0070f3', textDecoration: 'underline' }}>Go to Download Page</a>
     </div>
   );
 }
