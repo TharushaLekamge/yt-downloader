@@ -23,7 +23,7 @@ export default function Home() {
       <pre style={{ background: "#f4f4f4", padding: 16, borderRadius: 8 }}>
         {error ? error : status}
       </pre>
-      <a href="/download" style={{ marginTop: 24, display: "inline-block", fontSize: 18, color: '#0070f3', textDecoration: 'underline' }}>Go to Download Page</a>
+      <a href="/DownloadPage" style={{ marginTop: 24, display: "inline-block", fontSize: 18, color: '#0070f3', textDecoration: 'underline' }}>Go to Download Page</a>
     </div>
   );
 }
