@@ -21,7 +21,7 @@ export default function FormatSelect({ formats, selectedFormat, setSelectedForma
         <option value="">-- Select --</option>
         {formats.map(f => (
           <option key={f.ID} value={f.ID}>
-            {f.ID} | {f.EXT} | {f.RESOLUTION || "-"} | {f.FPS || "-"}fps | {f.CH || "-"}ch | {f.FILESIZE ? (f.FILESIZE / 1024 / 1024).toFixed(2) + " MB" : "-"} | {f.TBR || "-"}kbps | {f.PROTO || "-"} | {f.VCODEC || "-"} | {f.VBR || "-"} | {f.ACODEC || "-"} | {f.ABR || "-"} | {f.ASR || "-"} | {f.MORE_INFO || "-"}
+            {f.ID} | {f.EXT} | {f.RESOLUTION || "-"} | {f.FILESIZE ? (f.FILESIZE / 1024 / 1024).toFixed(2) + " MB" : "-"}
           </option>
         ))}
       </select>
