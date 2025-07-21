@@ -81,6 +81,31 @@ yt-downloader/
 - Implement endpoints for video download, progress tracking, and configuration management.
 - Build out the frontend UI for submitting download requests.
 
+## API Endpoints
+
+### Download Endpoints
+
+- `POST /download/download-video`  
+  Start an immediate download. Request body: `{ youtube_url, video_quality, audio_quality }`. Returns a task ID and status.
+
+- `POST /download/schedule-download`  
+  Schedule a download for a future UTC time. Request body: `{ youtube_url, video_quality, audio_quality, scheduled_time (ISO 8601 UTC) }`. Returns a task ID and status.
+
+- `GET /download/scheduled-downloads`  
+  List all scheduled (pending) downloads. Returns current server time and a list of scheduled jobs with time remaining (in minutes) and all job details.
+
+- `DELETE /download/scheduled-downloads/{task_id}`  
+  Remove a scheduled download from the queue by its task ID. Returns status and task ID.
+
+- `GET /download/past-downloads`  
+  List all completed and errored downloads (history).
+
+- `GET /download/download-status/{task_id}`  
+  Get the status and file path of a specific download by task ID.
+
+- `POST /download/list-qualities`  
+  Get available formats for a YouTube URL. Request body: `{ link }`. Returns a list of formats.
+
 ---
 
 *This project is in early development. Contributions and feedback are welcome!*
