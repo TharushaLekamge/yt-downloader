@@ -32,7 +32,7 @@ export default function AudioVideoSelect({
           <option value="">-- Select Video --</option>
           {videoFormats.map(f => (
             <option key={f.ID} value={f.ID}>
-              {f.ID} | {f.EXT} | {f.RESOLUTION || "-"} | {f.FPS || "-"}fps | {f.FILESIZE ? (f.FILESIZE / 1024 / 1024).toFixed(2) + " MB" : "-"} | {f.VCODEC || "-"} | {f.VBR || "-"} | {f.MORE_INFO || "-"}
+              {f.ID} | {f.EXT} | {f.RESOLUTION || "-"} | {f.FILESIZE ? (f.FILESIZE / 1024 / 1024).toFixed(2) + " MB" : "-"}
             </option>
           ))}
         </select>

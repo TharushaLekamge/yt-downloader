@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from ..yt_dlp_handler import list_qualities, download_video
+from ..handler.yt_dlp_handler import download_video
+from ..handler.list_qualities import list_qualities
 from ..config import DOWNLOAD_DIR
 import os
 
@@ -15,30 +16,11 @@ class DownloadRequest(BaseModel):
     video_quality: str = "bestvideo"
     audio_quality: str = "bestaudio"
 
-def simplify_format(fmt):
-    return {
-        "ID": fmt.get("format_id"),
-        "EXT": fmt.get("ext"),
-        "RESOLUTION": fmt.get("resolution") or (f"{fmt.get('width', '')}x{fmt.get('height', '')}" if fmt.get('width') and fmt.get('height') else None),
-        "FPS": fmt.get("fps"),
-        "CH": fmt.get("audio_channels"),
-        "FILESIZE": fmt.get("filesize") or fmt.get("filesize_approx"),
-        "TBR": fmt.get("tbr"),
-        "PROTO": fmt.get("protocol"),
-        "VCODEC": fmt.get("vcodec"),
-        "VBR": fmt.get("vbr"),
-        "ACODEC": fmt.get("acodec"),
-        "ABR": fmt.get("abr"),
-        "ASR": fmt.get("asr"),
-        "MORE_INFO": fmt.get("format_note")
-    }
-
 @router.post("/list-qualities")
 def api_list_qualities(req: ListQualitiesRequest):
     try:
         formats = list_qualities(req.link)
-        simple_formats = [simplify_format(fmt) for fmt in formats]
-        return {"formats": simple_formats}
+        return {"count": len(formats), "results": formats}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
