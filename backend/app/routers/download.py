@@ -62,4 +62,5 @@ def api_download_video(req: DownloadRequest, background_tasks: BackgroundTasks):
 def download_status(task_id: str):
     if task_id not in task_registry:
         raise HTTPException(status_code=404, detail="Task not found")
-    return task_registry[task_id]
+    entry = task_registry[task_id]
+    return {"status": entry["status"], "file_path": entry["file_path"]}
