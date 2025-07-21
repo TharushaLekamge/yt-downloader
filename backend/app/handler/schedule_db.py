@@ -61,4 +61,20 @@ def list_jobs(status: Optional[str] = None):
         statement = select(DownloadJob)
         if status:
             statement = statement.where(DownloadJob.status == status)
-        return session.exec(statement).all() 
+        return session.exec(statement).all()
+
+
+def list_jobs_by_statuses(statuses: list):
+    with Session(engine) as session:
+        statement = select(DownloadJob).where(DownloadJob.status.in_(statuses))
+        return session.exec(statement).all()
+
+
+def delete_job_by_task_id(task_id: str):
+    with Session(engine) as session:
+        job = get_job_by_task_id(task_id)
+        if job:
+            session.delete(job)
+            session.commit()
+            return True
+        return False 
