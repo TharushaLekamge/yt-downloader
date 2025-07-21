@@ -5,9 +5,16 @@ from .routers import download
 import os
 from .handler.schedule_db import init_db
 from .handler.scheduler import start_scheduler
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Initialize logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+)
 
 app = FastAPI()
 

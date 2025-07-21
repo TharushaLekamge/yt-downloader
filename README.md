@@ -128,3 +128,85 @@ To download age-restricted or private videos, or to avoid rate-limiting, you may
    - Run `docker-compose up --build` to ensure the backend picks up your cookies.
 
 Your yt-dlp downloads will now use your YouTube cookies for authentication.
+
+## TrueNAS SCALE Deployment
+
+You can deploy this app on TrueNAS SCALE using the following JSON manifest. This manifest configures both backend and frontend containers, environment variables, port mappings, and volume mounts for persistent storage.
+
+Copy and use this manifest in the TrueNAS SCALE Apps UI or as part of your custom app setup:
+
+```json
+{
+  "name": "yt-downloader",
+  "release": "1",
+  "containers": [
+    {
+      "name": "backend",
+      "image_repository": "tharushalekamge99/yt-backend",
+      "image_tag": "prod",
+      "environment_variables": [
+        {
+          "key": "YT_DLP_COOKIES",
+          "value": "/app/handler/cookies.txt"
+        },
+        {
+          "key": "DOWNLOAD_DIR",
+          "value": "/downloads"
+        }
+      ],
+      "entrypoint": [],
+      "command": [],
+      "ports": [
+        {
+          "container_port": 20000,
+          "host_port": 20000,
+          "protocol": "TCP"
+        }
+      ],
+      "mounts": [
+        {
+          "container_path": "/downloads",
+          "host_path": "/mnt/SSD/share",
+          "readonly": false
+        },
+        {
+          "container_path": "/app/handler/cookies.txt",
+          "host_path": "/mnt/SSD/apps/yt-downloader/backend/app/handler/cookies.txt",
+          "readonly": false
+        }
+      ],
+      "restart_policy": "unless-stopped",
+      "timezone": "Asia/Colombo"
+    },
+    {
+      "name": "frontend",
+      "image_repository": "tharushalekamge99/yt-frontend",
+      "image_tag": "prod",
+      "environment_variables": [],
+      "entrypoint": [],
+      "command": [],
+      "ports": [
+        {
+          "container_port": 3000,
+          "host_port": 30000,
+          "protocol": "TCP"
+        }
+      ],
+      "mounts": [
+        {
+          "container_path": "/app",
+          "host_path": "/mnt/SSD/apps/yt-downloader/frontend",
+          "readonly": false
+        }
+      ],
+      "restart_policy": "unless-stopped",
+      "timezone": "Asia/Colombo"
+    }
+  ]
+}
+```
+
+**Instructions:**
+- Adjust `host_path` values as needed for your TrueNAS storage locations.
+- Make sure the backend and frontend images are available in your container registry.
+- This manifest sets up persistent storage for downloads and cookies, and exposes the backend and frontend on ports 20000 and 30000, respectively.

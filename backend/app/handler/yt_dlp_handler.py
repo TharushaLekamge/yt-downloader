@@ -2,11 +2,13 @@ import subprocess
 import tempfile
 import os
 import shutil
+import logging
 
 COOKIES_PATH = os.getenv("YT_DLP_COOKIES", os.path.join(os.path.dirname(__file__), "cookies.txt"))
 
 def get_video_title_and_extension(youtube_url: str) -> str:
     """Fetch the output filename using yt-dlp without downloading."""
+    logging.debug(f"[yt_dlp_handler] Getting video title and extension for URL: {youtube_url}")
     cmd = [
         "yt-dlp",
         "--get-filename",
@@ -15,8 +17,10 @@ def get_video_title_and_extension(youtube_url: str) -> str:
     ]
     if os.path.exists(COOKIES_PATH):
         cmd.extend(["--cookies", COOKIES_PATH])
-    
+        logging.debug(f"[yt_dlp_handler] Using cookies from {COOKIES_PATH}")
+    logging.debug(f"[yt_dlp_handler] Running command: {' '.join(cmd)}")
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    logging.debug(f"[yt_dlp_handler] yt-dlp output: {result.stdout.strip()}")
     return result.stdout.strip().splitlines()[-1]
 
 def build_download_command(youtube_url: str, output_path: str, video_quality: str, audio_quality: str) -> list:
@@ -31,7 +35,8 @@ def build_download_command(youtube_url: str, output_path: str, video_quality: st
     ]
     if os.path.exists(COOKIES_PATH):
         cmd.extend(["--cookies", COOKIES_PATH])
-        print('Using cookies from', COOKIES_PATH)
+        logging.debug(f"[yt_dlp_handler] Using cookies from {COOKIES_PATH}")
+    logging.debug(f"[yt_dlp_handler] Built download command: {' '.join(cmd)}")
     return cmd
 
 def get_unique_filename(path: str) -> str:
@@ -47,12 +52,16 @@ def get_unique_filename(path: str) -> str:
 def move_downloaded_file(temp_dir: str, final_output_path: str) -> str:
     """Move the downloaded file from the temp directory to the final destination with renaming if needed."""
     files = os.listdir(temp_dir)
+    logging.debug(f"[yt_dlp_handler] Files in temp_dir {temp_dir}: {files}")
     if not files:
+        logging.error(f"[yt_dlp_handler] No file downloaded in temp_dir {temp_dir}")
         raise RuntimeError("No file downloaded.")
     downloaded_file = os.path.join(temp_dir, files[0])
     final_output_path = get_unique_filename(final_output_path)
     os.makedirs(os.path.dirname(final_output_path), exist_ok=True)
+    logging.info(f"[yt_dlp_handler] Moving file from {downloaded_file} to {final_output_path}")
     shutil.move(downloaded_file, final_output_path)
+    logging.info(f"[yt_dlp_handler] File successfully written to downloads folder: {final_output_path}")
     return final_output_path
 
 def download_video(
@@ -66,9 +75,11 @@ def download_video(
     Renames file if a conflict exists.
     Returns a dictionary with status, file_path, stdout, and stderr.
     """
+    logging.info(f"[yt_dlp_handler] Starting download: url={youtube_url}, output={output_path}, video_quality={video_quality}, audio_quality={audio_quality}")
     try:
         real_filename = get_video_title_and_extension(youtube_url)
     except subprocess.CalledProcessError as e:
+        logging.error(f"[yt_dlp_handler] Error getting filename for url={youtube_url}: {e.stderr}")
         return {
             "status": "error",
             "file_path": None,
@@ -81,10 +92,12 @@ def download_video(
         target_dir = os.path.dirname(output_path)
         final_output_path = os.path.join(target_dir, real_filename)
         cmd = build_download_command(youtube_url, temp_output_path, video_quality, audio_quality)
-
         try:
+            logging.debug(f"[yt_dlp_handler] Running yt-dlp command: {' '.join(cmd)}")
             proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            logging.info(f"[yt_dlp_handler] yt-dlp finished: url={youtube_url}, temp_output={temp_output_path}, stdout={proc.stdout}, stderr={proc.stderr}")
             moved_path = move_downloaded_file(tmpdir, final_output_path)
+            logging.info(f"[yt_dlp_handler] File moved to final destination: {moved_path}")
             return {
                 "status": "success",
                 "file_path": moved_path,
@@ -92,6 +105,7 @@ def download_video(
                 "stderr": proc.stderr
             }
         except subprocess.CalledProcessError as e:
+            logging.error(f"[yt_dlp_handler] yt-dlp error: url={youtube_url}, cmd={' '.join(cmd)}, stdout={e.stdout}, stderr={e.stderr}")
             return {
                 "status": "error",
                 "file_path": None,
@@ -99,6 +113,7 @@ def download_video(
                 "stderr": e.stderr
             }
         except Exception as e:
+            logging.error(f"[yt_dlp_handler] Exception during download: url={youtube_url}, error={str(e)}")
             return {
                 "status": "error",
                 "file_path": None,

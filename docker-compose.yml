@@ -11,7 +11,7 @@ services:
       - ./backend:/app
       - ./backend/requirements.txt:/app/requirements.txt
       - ./backend/app/handler/cookies.txt:/app/handler/cookies.txt
-      - ./downloads:/downloads
+      - /mnt/SSD/share:/downloads
     # Optionally, set environment variables or command overrides for dev
 
   frontend:

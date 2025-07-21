@@ -11,6 +11,7 @@ import subprocess
 import json
 from typing import List, Dict, Any
 from dateutil import parser as dateutil_parser
+import logging
 
 router = APIRouter(prefix="/download", tags=["download"])
 
@@ -56,6 +57,7 @@ def api_list_qualities(req: ListQualitiesRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 def download_task(task_id: str, req: DownloadRequest):
+    logging.info(f"[API] Starting download task: task_id={task_id}, url={req.youtube_url}, output={req.output_path}, video_quality={req.video_quality}, audio_quality={req.audio_quality}")
     task_registry[task_id] = {"status": "in_progress", "file_path": None, "stdout": "", "stderr": ""}
     try:
         os.makedirs(os.path.dirname(req.output_path), exist_ok=True)
@@ -65,6 +67,7 @@ def download_task(task_id: str, req: DownloadRequest):
             req.video_quality,
             req.audio_quality
         )
+        logging.info(f"[API] Download task finished: task_id={task_id}, status={result.get('status')}, file_path={result.get('file_path')}, stdout={result.get('stdout')}, stderr={result.get('stderr')}")
         task_registry[task_id] = {
             "status": result.get("status", "error"),
             "file_path": result.get("file_path"),
@@ -72,12 +75,14 @@ def download_task(task_id: str, req: DownloadRequest):
             "stderr": result.get("stderr", "")
         }
     except Exception as e:
+        logging.error(f"[API] Exception in download task: task_id={task_id}, error={str(e)}")
         task_registry[task_id] = {"status": "error", "file_path": None, "stdout": "", "stderr": str(e)}
 
 @router.post("/download-video", response_model=DownloadResponse)
 def api_download_video(req: DownloadRequest, background_tasks: BackgroundTasks):
     task_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
+    logging.info(f"[API] /download-video called: task_id={task_id}, url={req.youtube_url}, output={req.output_path}, video_quality={req.video_quality}, audio_quality={req.audio_quality}")
     # Only allow immediate download
     job = DownloadJob(
         task_id=task_id,
@@ -96,6 +101,7 @@ def api_download_video(req: DownloadRequest, background_tasks: BackgroundTasks):
 def api_schedule_download(req: DownloadRequest):
     task_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
+    logging.info(f"[API] /schedule-download called: task_id={task_id}, url={req.youtube_url}, output={req.output_path}, video_quality={req.video_quality}, audio_quality={req.audio_quality}, scheduled_time={req.scheduled_time}")
     # Parse scheduled_time as UTC, even if tzinfo is missing
     if not req.scheduled_time:
         raise HTTPException(status_code=400, detail="scheduled_time is required")
@@ -107,8 +113,10 @@ def api_schedule_download(req: DownloadRequest):
         else:
             scheduled_time = scheduled_time.astimezone(timezone.utc)
     except Exception:
+        logging.error(f"[API] Invalid scheduled_time format: {req.scheduled_time}")
         raise HTTPException(status_code=400, detail="Invalid scheduled_time format")
     if scheduled_time <= now:
+        logging.error(f"[API] scheduled_time must be in the future: {scheduled_time} <= {now}")
         raise HTTPException(status_code=400, detail="scheduled_time must be in the future (UTC)")
     job = DownloadJob(
         task_id=task_id,
@@ -120,6 +128,7 @@ def api_schedule_download(req: DownloadRequest):
         status="scheduled"
     )
     add_download_job(job)
+    logging.info(f"[API] Download job scheduled: task_id={task_id}, scheduled_time={scheduled_time}")
     return {"task_id": task_id, "status": "scheduled"}
 
 @router.get("/download-status/{task_id}")
