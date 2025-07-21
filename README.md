@@ -210,3 +210,19 @@ Copy and use this manifest in the TrueNAS SCALE Apps UI or as part of your custo
 - Adjust `host_path` values as needed for your TrueNAS storage locations.
 - Make sure the backend and frontend images are available in your container registry.
 - This manifest sets up persistent storage for downloads and cookies, and exposes the backend and frontend on ports 20000 and 30000, respectively.
+
+## Building and Pushing Docker Images
+
+To build and push the backend and frontend Docker images to your registry, use the following commands (replace `<username>` with your Docker Hub or registry username):
+
+```sh
+# Build and push backend image
+docker build -t <username>/yt-backend:prod ./backend
+docker push <username>/yt-backend:prod
+
+# Build and push frontend image
+docker build -t <username>/yt-frontend:prod ./frontend
+docker push <username>/yt-frontend:prod
+```
+
+These images can then be referenced in your TrueNAS SCALE manifest or other deployment setups.
