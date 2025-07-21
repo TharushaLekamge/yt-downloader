@@ -1,23 +1,20 @@
 version: '3.8'
-
 services:
-  yt-downloader:
-    build: .
-    container_name: yt-downloader
+  backend:
+    build: ./backend
     ports:
       - "20000:20000"
-    environment:
-      # Set DEV_MODE=1 for development (live reload), omit or set to 0 for production
-      - DEV_MODE=0
-      # Example: pass additional environment variables or secrets here
-      # - YT_DLP_OPTS=--format best
-      # - DOWNLOAD_DIR=/downloads
     volumes:
-      - downloads:/downloads  # Persistent storage for downloaded files
-      - ./app:/app            # (Optional) Mount source code for live reload/dev
-      - ./.env:/.env          # (Optional) Pass .env file
-    restart: unless-stopped
+      - ./backend:/app
+      - ./backend/requirements.txt:/app/requirements.txt
+    # Optionally, set environment variables or command overrides for dev
 
-volumes:
-  downloads:
-    driver: local 
+  frontend:
+    build: ./frontend
+    ports:
+      - "30000:30000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+    # Optionally, set environment variables or command overrides for dev

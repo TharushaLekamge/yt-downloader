@@ -1,0 +1,10 @@
+**/node_modules
+**/npm-debug.log
+**/.next
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/venv
+**/.env
+**/.env.*
