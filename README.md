@@ -84,3 +84,22 @@ yt-downloader/
 ---
 
 *This project is in early development. Contributions and feedback are welcome!*
+
+## Using YouTube Cookies for yt-dlp
+
+To download age-restricted or private videos, or to avoid rate-limiting, you may need to provide your YouTube cookies to yt-dlp. Follow these steps:
+
+1. **Export Cookies from Chrome:**
+   - Install the [EditThisCookie Chrome extension](https://www.editthiscookie.com/start/).
+   - Go to youtube.com and log in with your account.
+   - Click the EditThisCookie icon in your browser toolbar.
+   - Click the "Export" button to download your cookies as a `cookies.txt` file.
+
+2. **Place the cookies.txt file:**
+   - Move the downloaded `cookies.txt` file to `backend/app/handler/cookies.txt` in this repository.
+   - The file is already git-ignored and will not be committed to version control.
+
+3. **Restart Docker Compose:**
+   - Run `docker-compose up --build` to ensure the backend picks up your cookies.
+
+Your yt-dlp downloads will now use your YouTube cookies for authentication.
