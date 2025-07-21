@@ -15,6 +15,10 @@ export default function DownloadPage() {
   const [selectedAudio, setSelectedAudio] = useState<string>("");
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
   const [mode, setMode] = useState<"combined" | "separate">("combined");
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [scheduleStatus, setScheduleStatus] = useState<string | null>(null);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
 
   const fetchQualities = async () => {
     setLoading(true);
@@ -86,6 +90,55 @@ export default function DownloadPage() {
       ? !!selectedFormat
       : !!selectedVideo && !!selectedAudio;
 
+  const handleDirectDownload = async () => {
+    setDownloadStatus(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/download/download-video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ youtube_url: url, video_quality: "bestvideo", audio_quality: "bestaudio" }),
+      });
+      if (!res.ok) throw new Error("Direct download failed");
+      const data = await res.json();
+      setDownloadStatus(`Direct download started. Task ID: ${data.task_id || data.file_path}`);
+    } catch (e: any) {
+      setError(e.message || "Unknown error");
+    }
+  };
+
+  const handleScheduleDownload = async () => {
+    setScheduleStatus(null);
+    setScheduleError(null);
+    if (!url || !scheduleDate || !scheduleTime) {
+      setScheduleError("Please enter a URL, date, and time.");
+      return;
+    }
+    // Combine date and time in local timezone, then convert to UTC ISO string
+    const localDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
+    const scheduled_time = localDateTime.toISOString(); // This is always UTC
+    // Use selected formats if present, else bestvideo/bestaudio
+    let video_quality = selectedVideo || selectedFormat || "bestvideo";
+    let audio_quality = selectedAudio || selectedFormat || "bestaudio";
+    try {
+      const res = await fetch("/api/download/schedule-download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          youtube_url: url,
+          video_quality,
+          audio_quality,
+          scheduled_time,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to schedule download");
+      const data = await res.json();
+      setScheduleStatus(`Download scheduled. Task ID: ${data.task_id}`);
+    } catch (e: any) {
+      setScheduleError(e.message || "Unknown error");
+    }
+  };
+
   return (
     <div style={{ maxWidth: 700, margin: '0 auto', marginTop: 48, padding: 16 }}>
       <div style={{ background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', padding: 24 }}>
@@ -106,6 +159,14 @@ export default function DownloadPage() {
             style={{ padding: '8px 20px', fontSize: 16, borderRadius: 4, background: '#2563eb', color: '#fff', border: 'none', cursor: loading || !url ? 'not-allowed' : 'pointer' }}
           >
             {loading ? "Loading..." : "Submit"}
+          </button>
+          <button
+            type="button"
+            onClick={handleDirectDownload}
+            disabled={loading || !url}
+            style={{ padding: '8px 20px', fontSize: 16, borderRadius: 4, background: '#f59e42', color: '#fff', border: 'none', cursor: loading || !url ? 'not-allowed' : 'pointer' }}
+          >
+            Direct Download (Best Quality)
           </button>
         </form>
         {error && <div style={{ color: 'red', marginBottom: 16 }}>{error}</div>}
@@ -171,6 +232,37 @@ export default function DownloadPage() {
           </>
         )}
         {downloadStatus && <div style={{ color: 'green', marginTop: 16 }}>{downloadStatus}</div>}
+        {/* Schedule Download Section */}
+        <div style={{ marginTop: 32, padding: 16, border: '1px solid #eee', borderRadius: 8, background: '#f9fafb' }}>
+          <h3 style={{ fontSize: 20, marginBottom: 12 }}>Schedule Download</h3>
+          <div style={{ color: '#666', fontSize: 13, marginBottom: 8 }}>
+            Times are in your local timezone. The server will schedule in UTC.
+          </div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+            <input
+              type="date"
+              value={scheduleDate}
+              onChange={e => setScheduleDate(e.target.value)}
+              style={{ padding: 8, fontSize: 16, borderRadius: 4, border: '1px solid #ccc' }}
+            />
+            <input
+              type="time"
+              value={scheduleTime}
+              onChange={e => setScheduleTime(e.target.value)}
+              style={{ padding: 8, fontSize: 16, borderRadius: 4, border: '1px solid #ccc' }}
+            />
+            <button
+              type="button"
+              onClick={handleScheduleDownload}
+              disabled={!url || !scheduleDate || !scheduleTime}
+              style={{ padding: '8px 20px', fontSize: 16, borderRadius: 4, background: '#6366f1', color: '#fff', border: 'none', cursor: !url || !scheduleDate || !scheduleTime ? 'not-allowed' : 'pointer' }}
+            >
+              Schedule Download
+            </button>
+          </div>
+          {scheduleError && <div style={{ color: 'red', marginBottom: 8 }}>{scheduleError}</div>}
+          {scheduleStatus && <div style={{ color: 'green', marginBottom: 8 }}>{scheduleStatus}</div>}
+        </div>
       </div>
     </div>
   );

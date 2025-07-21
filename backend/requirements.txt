@@ -3,3 +3,6 @@ uvicorn[standard]==0.29.0
 yt-dlp==2025.06.30
 python-dotenv==1.0.1 
 ffmpeg-python 
+sqlmodel
+apscheduler 
+python-dateutil
