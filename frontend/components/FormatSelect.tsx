@@ -1,7 +1,7 @@
 import { Format } from "../types";
 
 interface Props {
-  formats: Format[];
+  formats: any[];
   selectedFormat: string;
   setSelectedFormat: (id: string) => void;
 }
@@ -20,8 +20,10 @@ export default function FormatSelect({ formats, selectedFormat, setSelectedForma
       >
         <option value="">-- Select --</option>
         {formats.map(f => (
-          <option key={f.ID} value={f.ID}>
-            {f.ID} | {f.EXT} | {f.RESOLUTION || "-"} | {f.FILESIZE ? (f.FILESIZE / 1024 / 1024).toFixed(2) + " MB" : "-"}
+          <option key={
+            (f.format_id || f.ID || "") + "-" + (f.ext || f.EXT || "") + "-" + (f.resolution || f.RESOLUTION || "")
+          } value={f.format_id || f.ID}>
+            {(f.format_id || f.ID)} | {(f.ext || f.EXT)} | {(f.resolution || f.RESOLUTION) || "-"} | {f.filesize ? (f.filesize / 1024 / 1024).toFixed(2) + " MB" : (f.FILESIZE ? (f.FILESIZE / 1024 / 1024).toFixed(2) + " MB" : "-")}
           </option>
         ))}
       </select>

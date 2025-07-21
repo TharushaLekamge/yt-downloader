@@ -1,0 +1,42 @@
+type: array
+description: List of available download formats from yt-dlp -F output
+items:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Format ID used for downloading with yt-dlp
+    ext:
+      type: string
+      description: File extension (e.g., mp4, webm)
+    resolution:
+      type: string
+      description: Video resolution (e.g., 720p, audio only)
+    fps:
+      type: string
+      description: Frames per second, if applicable
+    ch:
+      type: string
+      description: Number of audio channels (e.g., 2)
+    filesize:
+      type: string
+      description: Estimated file size or dash size (may be missing or empty)
+    tbr:
+      type: string
+      description: Total bitrate (e.g., 1298k)
+    proto:
+      type: string
+      description: Protocol used for streaming/download (e.g., https, dash)
+    vcodec:
+      type: string
+      description: Video codec (e.g., avc1.64001F)
+    vbr:
+      type: string
+      description: Video bitrate (if present, otherwise empty)
+    acodec:
+      type: string
+      description: Audio codec (e.g., mp4a.40.2 or none)
+  required:
+    - id
+    - ext
+    - resolution

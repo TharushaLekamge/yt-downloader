@@ -14,6 +14,7 @@ export default function DownloadPage() {
   const [selectedVideo, setSelectedVideo] = useState<string>("");
   const [selectedAudio, setSelectedAudio] = useState<string>("");
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
+  const [mode, setMode] = useState<"combined" | "separate">("combined");
 
   const fetchQualities = async () => {
     setLoading(true);
@@ -31,7 +32,12 @@ export default function DownloadPage() {
       });
       if (!res.ok) throw new Error("Failed to fetch qualities");
       const data = await res.json();
-      setFormats(data.formats);
+      console.log("Fetched formats (raw):", data.results);
+      setFormats(data.results || []);
+      // Set default mode based on available formats
+      const combined = (data.results || []).filter((f: any) => (f as any).vcodec && (f as any).vcodec !== "none" && (f as any).acodec && (f as any).acodec !== "none");
+      console.log("Combined formats (on fetch):", combined);
+      setMode(combined.length > 0 ? "combined" : "separate");
     } catch (e: any) {
       setError(e.message || "Unknown error");
     } finally {
@@ -40,20 +46,21 @@ export default function DownloadPage() {
   };
 
   // Combined AV formats: both vcodec and acodec are not 'none'
-  const combinedFormats = formats.filter(f => f.VCODEC && f.VCODEC !== "none" && f.ACODEC && f.ACODEC !== "none");
-  // Video only: vcodec present, acodec is 'none'
-  const videoFormats = formats.filter(f => f.VCODEC && f.VCODEC !== "none" && (!f.ACODEC || f.ACODEC === "none"));
-  // Audio only: acodec present, vcodec is 'none'
-  const audioFormats = formats.filter(f => f.ACODEC && f.ACODEC !== "none" && (!f.VCODEC || f.VCODEC === "none"));
+  const combinedFormats = formats.filter(f => (f as any).vcodec && (f as any).vcodec !== "none" && (f as any).acodec && (f as any).acodec !== "none");
+  const videoFormats = formats.filter(f => (f as any).vcodec && (f as any).vcodec !== "none" && (!(f as any).acodec || (f as any).acodec === "none"));
+  const audioFormats = formats.filter(f => (f as any).acodec && (f as any).acodec !== "none" && (!(f as any).vcodec || (f as any).vcodec === "none"));
+  console.log("Combined formats:", combinedFormats);
+  console.log("Video only formats:", videoFormats);
+  console.log("Audio only formats:", audioFormats);
 
-  // If there are combined formats, use single dropdown mode
-  const useCombined = combinedFormats.length > 0;
+  // If there are combined formats and separate formats, allow user to choose
+  const canChooseMode = combinedFormats.length > 0 && (videoFormats.length > 0 || audioFormats.length > 0);
 
   const handleDownload = async () => {
     setDownloadStatus(null);
     setError(null);
     let body: any = { youtube_url: url };
-    if (useCombined) {
+    if (mode === "combined") {
       body.video_quality = selectedFormat;
     } else {
       body.video_quality = selectedVideo;
@@ -75,7 +82,7 @@ export default function DownloadPage() {
 
   // Download button enabled logic
   const canDownload =
-    useCombined
+    mode === "combined"
       ? !!selectedFormat
       : !!selectedVideo && !!selectedAudio;
 
@@ -105,7 +112,40 @@ export default function DownloadPage() {
         {formats.length > 0 && (
           <>
             <div style={{ borderTop: '1px solid #eee', margin: '16px 0' }} />
-            {useCombined ? (
+            <div style={{ marginBottom: 12, fontSize: 15, color: '#444' }}>
+              <span style={{ marginRight: 18 }}>
+                <b>{combinedFormats.length}</b> audio+video
+              </span>
+              <span style={{ marginRight: 18 }}>
+                <b>{videoFormats.length}</b> video only
+              </span>
+              <span>
+                <b>{audioFormats.length}</b> audio only
+              </span>
+            </div>
+            {canChooseMode && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontWeight: 500, marginRight: 24 }}>
+                  <input
+                    type="radio"
+                    checked={mode === "combined"}
+                    onChange={() => setMode("combined")}
+                    style={{ marginRight: 6 }}
+                  />
+                  Combined (audio+video)
+                </label>
+                <label style={{ fontWeight: 500 }}>
+                  <input
+                    type="radio"
+                    checked={mode === "separate"}
+                    onChange={() => setMode("separate")}
+                    style={{ marginRight: 6, marginLeft: 24 }}
+                  />
+                  Separate (audio and video)
+                </label>
+              </div>
+            )}
+            {mode === "combined" ? (
               <FormatSelect
                 formats={combinedFormats}
                 selectedFormat={selectedFormat}
@@ -134,4 +174,4 @@ export default function DownloadPage() {
       </div>
     </div>
   );
-} 
+}
