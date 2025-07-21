@@ -6,10 +6,12 @@ services:
       - "20000:20000"
     environment:
       - YT_DLP_COOKIES=/app/handler/cookies.txt
+      - DOWNLOAD_DIR=/downloads
     volumes:
       - ./backend:/app
       - ./backend/requirements.txt:/app/requirements.txt
       - ./backend/app/handler/cookies.txt:/app/handler/cookies.txt
+      - ./downloads:/downloads
     # Optionally, set environment variables or command overrides for dev
 
   frontend:
